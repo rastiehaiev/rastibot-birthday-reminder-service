@@ -8,7 +8,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.Valid;
 
 @RestController
 @RequiredArgsConstructor
@@ -17,7 +20,7 @@ public class BirthDayReminderController {
     private final BirthDayReminderService birthDayReminderService;
 
     @PostMapping("/")
-    public ResponseEntity<?> createBirthDayReminder(BirthDayReminder reminder) {
+    public ResponseEntity<?> createBirthDayReminder(@Valid @RequestBody BirthDayReminder reminder) {
         Result<CreateBirthDayReminderResult> result = birthDayReminderService.create(reminder);
         return processResult(result);
     }

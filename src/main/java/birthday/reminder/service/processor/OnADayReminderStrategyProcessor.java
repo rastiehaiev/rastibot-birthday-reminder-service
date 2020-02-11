@@ -17,6 +17,11 @@ public class OnADayReminderStrategyProcessor extends ReminderStrategyProcessor {
     }
 
     @Override
+    public boolean isApplicable(long millisBeforeNextReminder) {
+        return millisBeforeNextReminder <= TimeUnit.DAYS.toMillis(1) && millisBeforeNextReminder > TimeUnit.DAYS.toMillis(0);
+    }
+
+    @Override
     protected int daysBeforeReminder() {
         return 0;
     }
@@ -28,10 +33,5 @@ public class OnADayReminderStrategyProcessor extends ReminderStrategyProcessor {
 
         LocalDate nextDate = LocalDate.of(localDate.getYear() + 1, localDate.getMonth(), localDate.getDayOfMonth());
         reminder.setNextBirthDayTimestamp(nextDate.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli());
-    }
-
-    @Override
-    public boolean isApplicable(long millisBeforeNextReminder) {
-        return millisBeforeNextReminder <= TimeUnit.DAYS.toMillis(1) && millisBeforeNextReminder > TimeUnit.DAYS.toMillis(0);
     }
 }

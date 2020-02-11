@@ -1,7 +1,6 @@
 package birthday.reminder.service.repository;
 
 import birthday.reminder.service.entity.BirthDayReminderEntity;
-import birthday.reminder.service.model.BirthDayReminderStrategy;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -15,8 +14,8 @@ public interface BirthDayReminderRepository extends CrudRepository<BirthDayRemin
 
     BirthDayReminderEntity findByChatIdAndRemindedUserChatId(long chatId, long remindedUserChatId);
 
-    @Query(value = "SELECT * FROM birthday_reminder WHERE strategy=:strategy AND next_birthday_timestamp=:next_birthday_timestamp FOR UPDATE", nativeQuery = true)
-    List<BirthDayReminderEntity> findApplicableByStrategyAndNextBirthDayTimestamp(@Param("strategy") BirthDayReminderStrategy strategy,
+    @Query(value = "SELECT * FROM birthday_reminder WHERE strategy = :strategy AND next_birthday_timestamp = :next_birthday_timestamp FOR UPDATE", nativeQuery = true)
+    List<BirthDayReminderEntity> findApplicableByStrategyAndNextBirthDayTimestamp(@Param("strategy") String strategy,
                                                                                   @Param("next_birthday_timestamp") long nextBirthdayTimestamp,
                                                                                   Pageable pageable);
 }

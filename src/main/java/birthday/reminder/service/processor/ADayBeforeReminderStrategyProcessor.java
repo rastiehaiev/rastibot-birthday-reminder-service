@@ -15,6 +15,11 @@ public class ADayBeforeReminderStrategyProcessor extends ReminderStrategyProcess
     }
 
     @Override
+    public boolean isApplicable(long millisBeforeNextReminder) {
+        return millisBeforeNextReminder <= TimeUnit.DAYS.toMillis(3) && millisBeforeNextReminder > TimeUnit.DAYS.toMillis(1);
+    }
+
+    @Override
     protected int daysBeforeReminder() {
         return 1;
     }
@@ -22,10 +27,5 @@ public class ADayBeforeReminderStrategyProcessor extends ReminderStrategyProcess
     @Override
     protected void update(BirthDayReminderEntity reminder) {
         reminder.setStrategy(BirthDayReminderStrategy.ON_A_DAY);
-    }
-
-    @Override
-    public boolean isApplicable(long millisBeforeNextReminder) {
-        return millisBeforeNextReminder <= TimeUnit.DAYS.toMillis(3) && millisBeforeNextReminder > TimeUnit.DAYS.toMillis(1);
     }
 }

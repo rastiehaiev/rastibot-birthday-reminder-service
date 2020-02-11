@@ -25,6 +25,6 @@ public class Result<P> {
     }
 
     public static <P> Result<P> conflict(String errorMessage) {
-        return new Result<>(HttpStatus.CREATED.value(), errorMessage);
+        return new Result<>(HttpStatus.CONFLICT.value(), errorMessage);
     }
 }

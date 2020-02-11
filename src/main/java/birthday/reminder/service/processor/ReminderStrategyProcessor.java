@@ -22,7 +22,7 @@ public abstract class ReminderStrategyProcessor {
     @Autowired
     protected BirthDayReminderRepository repository;
 
-    @Value("${birthday-reminder.batch-size:100}")
+    @Value("${birthday-reminder-service.batch-size:100}")
     private int batchSize;
 
     @Transactional
@@ -39,18 +39,18 @@ public abstract class ReminderStrategyProcessor {
         return notifications;
     }
 
-    protected abstract int daysBeforeReminder();
-
     public abstract BirthDayReminderStrategy applicableStrategy();
 
     public abstract boolean isApplicable(long millisBeforeNextReminder);
 
-    private List<BirthDayReminderEntity> findTargetReminders(int batchSize) {
-        long inTwoWeeks = clock.instant().plus(daysBeforeReminder(), ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS).toEpochMilli();
-        return repository.findApplicableByStrategyAndNextBirthDayTimestamp(applicableStrategy(), inTwoWeeks, PageRequest.of(0, batchSize));
-    }
+    protected abstract int daysBeforeReminder();
 
     protected abstract void update(BirthDayReminderEntity reminder);
+
+    private List<BirthDayReminderEntity> findTargetReminders(int batchSize) {
+        long inDays = clock.instant().plus(daysBeforeReminder() + 1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS).toEpochMilli();
+        return repository.findApplicableByStrategyAndNextBirthDayTimestamp(applicableStrategy().toString(), inDays, PageRequest.of(0, batchSize));
+    }
 
     private Notification getNotificationFromReminder(BirthDayReminderEntity reminder) {
         Notification notification = new Notification();
@@ -59,7 +59,7 @@ public abstract class ReminderStrategyProcessor {
         notification.setReminderUserChatId(reminder.getRemindedUserChatId());
         notification.setRemindedUserFirstName(reminder.getRemindedUserFirstName());
         notification.setRemindedUserLastName(reminder.getRemindedUserLastName());
-        notification.setStrategy(reminder.getStrategy());
+        notification.setStrategy(applicableStrategy());
         return notification;
     }
 }
