@@ -1,12 +1,28 @@
 plugins {
-    id 'java'
-    id 'application'
+    id 'org.springframework.boot' version '2.2.2.RELEASE'
 }
+
+apply plugin: 'java'
+apply plugin: 'io.spring.dependency-management'
+
+group = "birthday.reminder.service"
+version = "1.0.0-SNAPSHOT"
 
 repositories {
     jcenter()
 }
 
 dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    implementation 'org.postgresql:postgresql:42.2.6'
+    implementation 'org.flywaydb:flyway-core:5.2.4'
+
+    implementation 'org.apache.commons:commons-collections4:4.4'
+
+    compileOnly 'org.projectlombok:lombok:1.18.10'
+    annotationProcessor 'org.projectlombok:lombok:1.18.10'
+
     testImplementation 'junit:junit:4.12'
 }

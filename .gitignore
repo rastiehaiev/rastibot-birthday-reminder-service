@@ -28,6 +28,10 @@ hs_err_pid*
 # Ignore Gradle build output directory
 build
 
+# Local files for development
+.deploy
+application-local.yml
+
 # IDEA files
 .idea
 *.iml
