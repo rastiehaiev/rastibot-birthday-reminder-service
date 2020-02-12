@@ -7,7 +7,6 @@ import com.rastiehaiev.birthday.reminder.model.output.ErrorPayload;
 import com.rastiehaiev.birthday.reminder.service.BirthDayReminderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,7 +27,8 @@ public class BirthDayReminderController {
     }
 
     @ExceptionHandler({ReminderAlreadyExistsException.class})
-    public ResponseEntity<?> handleException(ReminderAlreadyExistsException e) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorPayload(e.getMessage()));
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorPayload handleReminderAlreadyExistsException(ReminderAlreadyExistsException e) {
+        return new ErrorPayload(e.getMessage());
     }
 }
