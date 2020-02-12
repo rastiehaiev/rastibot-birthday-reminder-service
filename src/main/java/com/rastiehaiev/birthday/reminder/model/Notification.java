@@ -10,5 +10,5 @@ public class Notification {
     private Long reminderUserChatId;
     private String remindedUserFirstName;
     private String remindedUserLastName;
-    private BirthDayReminderStrategy strategy;
+    private BirthDayReminderStrategy type;
 }

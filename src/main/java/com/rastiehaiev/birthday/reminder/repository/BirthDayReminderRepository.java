@@ -14,8 +14,10 @@ public interface BirthDayReminderRepository extends CrudRepository<BirthDayRemin
 
     BirthDayReminderEntity findByChatIdAndRemindedUserChatId(long chatId, long remindedUserChatId);
 
-    @Query(value = "SELECT * FROM birthday_reminder WHERE strategy = :strategy AND next_birthday_timestamp = :next_birthday_timestamp FOR UPDATE", nativeQuery = true)
-    List<BirthDayReminderEntity> findApplicableByStrategyAndNextBirthDayTimestamp(@Param("strategy") String strategy,
-                                                                                  @Param("next_birthday_timestamp") long nextBirthdayTimestamp,
-                                                                                  Pageable pageable);
+    @Query(value = "SELECT * FROM birthday_reminder WHERE next_birthday_timestamp < :upcomingTimestamp " +
+            "AND (last_updated IS NULL OR last_updated > :lastUpdatedMark) FOR UPDATE",
+            nativeQuery = true)
+    List<BirthDayReminderEntity> findUpcoming(@Param("upcomingTimestamp") long upcomingTimestamp,
+                                              @Param("lastUpdatedMark") long lastUpdatedMark,
+                                              Pageable pageable);
 }

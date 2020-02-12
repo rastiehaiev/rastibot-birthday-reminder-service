@@ -35,7 +35,10 @@ public class BirthDayReminderEntity {
     @Column(name = "year")
     private int year;
 
-    @Column(name = "strategy", nullable = false)
+    @Column(name = "preferred_strategy", nullable = false)
     @Enumerated(value = EnumType.STRING)
-    private BirthDayReminderStrategy strategy;
+    private BirthDayReminderStrategy preferredStrategy;
+
+    @Column(name = "last_updated")
+    private Long lastUpdated;
 }
