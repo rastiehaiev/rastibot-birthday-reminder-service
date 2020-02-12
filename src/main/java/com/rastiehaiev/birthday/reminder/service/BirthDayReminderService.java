@@ -21,24 +21,28 @@ public class BirthDayReminderService {
     public CreateBirthDayReminderResult create(BirthDayReminder birthDayReminder) {
         long chatId = birthDayReminder.getChatId();
         long remindedUserChatId = birthDayReminder.getPerson().getChatId();
-        BirthDayReminderEntity existingReminder = repository.findByChatIdAndRemindedUserChatId(chatId, remindedUserChatId);
-        if (existingReminder != null) {
-            throw new ReminderAlreadyExistsException("Reminder already exists.");
+
+        // check the parallel execution of the same request
+        synchronized ((chatId + "_" + remindedUserChatId).intern()) {
+            BirthDayReminderEntity existingReminder = repository.findByChatIdAndRemindedUserChatId(chatId, remindedUserChatId);
+            if (existingReminder != null) {
+                throw new ReminderAlreadyExistsException("Reminder already exists.");
+            }
+
+            BirthDayReminderEntity reminder = new BirthDayReminderEntity();
+            reminder.setChatId(birthDayReminder.getChatId());
+            reminder.setDay(birthDayReminder.getDay());
+            reminder.setMonth(birthDayReminder.getMonth());
+            reminder.setYear(birthDayReminder.getYear());
+            reminder.setRemindedUserChatId(remindedUserChatId);
+            reminder.setRemindedUserFirstName(birthDayReminder.getPerson().getFirstName());
+            reminder.setRemindedUserLastName(birthDayReminder.getPerson().getLastName());
+
+            long nextBirthDayTimestamp = calculateNextBirthdayTimestamp(birthDayReminder.getMonth(), birthDayReminder.getDay());
+            reminder.setNextBirthDayTimestamp(nextBirthDayTimestamp);
+            repository.save(reminder);
+            return new CreateBirthDayReminderResult(nextBirthDayTimestamp);
         }
-
-        BirthDayReminderEntity reminder = new BirthDayReminderEntity();
-        reminder.setChatId(birthDayReminder.getChatId());
-        reminder.setDay(birthDayReminder.getDay());
-        reminder.setMonth(birthDayReminder.getMonth());
-        reminder.setYear(birthDayReminder.getYear());
-        reminder.setRemindedUserChatId(remindedUserChatId);
-        reminder.setRemindedUserFirstName(birthDayReminder.getPerson().getFirstName());
-        reminder.setRemindedUserLastName(birthDayReminder.getPerson().getLastName());
-
-        long nextBirthDayTimestamp = calculateNextBirthdayTimestamp(birthDayReminder.getMonth(), birthDayReminder.getDay());
-        reminder.setNextBirthDayTimestamp(nextBirthDayTimestamp);
-        repository.save(reminder);
-        return new CreateBirthDayReminderResult(nextBirthDayTimestamp);
     }
 
     public long calculateNextBirthdayTimestamp(int monthNumber, int day) {

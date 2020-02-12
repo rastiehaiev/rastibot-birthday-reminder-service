@@ -8,7 +8,6 @@ import com.rastiehaiev.birthday.reminder.service.BirthDayReminderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
@@ -35,18 +34,15 @@ public class BirthDayReminderProcessor {
     private final BirthDayReminderRepository repository;
     private final BirthDayReminderService reminderService;
 
-    @Value("${birthday-reminder-service.batch-size:10}")
-    private int batchSize;
-
     @Transactional
-    public List<Notification> process() {
+    public List<Notification> processBatch(int batchSize) {
         List<Notification> notifications = new ArrayList<>();
         List<BirthDayReminderEntity> expiredReminders = new ArrayList<>();
 
         Instant instantAtStartOfDay = clock.instant().truncatedTo(ChronoUnit.DAYS);
         long lastUpdatedMark = clock.instant().toEpochMilli() + TimeUnit.HOURS.toMillis(1);
         long upcomingBirthDaysTimestamp = instantAtStartOfDay.plus(BirthDayReminderStrategy.MAX_DAYS_AMOUNT + 1, ChronoUnit.DAYS).toEpochMilli();
-        List<BirthDayReminderEntity> upcomingReminders = findUpcoming(lastUpdatedMark, upcomingBirthDaysTimestamp);
+        List<BirthDayReminderEntity> upcomingReminders = findUpcoming(lastUpdatedMark, upcomingBirthDaysTimestamp, batchSize);
         for (BirthDayReminderEntity reminder : upcomingReminders) {
             if (instantAtStartOfDay.toEpochMilli() > reminder.getNextBirthDayTimestamp()) {
                 expiredReminders.add(reminder);
@@ -75,7 +71,7 @@ public class BirthDayReminderProcessor {
         }
     }
 
-    private List<BirthDayReminderEntity> findUpcoming(long lastUpdatedMark, long upcomingBirthDaysTimestamp) {
+    private List<BirthDayReminderEntity> findUpcoming(long lastUpdatedMark, long upcomingBirthDaysTimestamp, int batchSize) {
         List<BirthDayReminderEntity> upcoming = repository.findUpcoming(upcomingBirthDaysTimestamp, lastUpdatedMark, PageRequest.of(0, batchSize));
         if (CollectionUtils.isNotEmpty(upcoming)) {
             log.info("Found {} upcoming reminders.", upcoming.size());
