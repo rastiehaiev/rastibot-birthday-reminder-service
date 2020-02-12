@@ -20,9 +20,12 @@ dependencies {
     implementation 'org.flywaydb:flyway-core:5.2.4'
 
     implementation 'org.apache.commons:commons-collections4:4.4'
+    implementation 'commons-io:commons-io:2.6'
 
     compileOnly 'org.projectlombok:lombok:1.18.10'
     annotationProcessor 'org.projectlombok:lombok:1.18.10'
 
     testImplementation 'junit:junit:4.12'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation "org.testcontainers:postgresql:1.12.5"
 }

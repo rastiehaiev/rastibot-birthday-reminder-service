@@ -1,0 +1,15 @@
+spring:
+  profiles: test
+  application:
+    name: birthday-reminder-service
+  flyway:
+    enabled: false
+
+server:
+  port: 9292
+
+birthday-reminder-service:
+  batch-size: ${BIRTHDAY_REMINDER_SERVICE_BATCH_SIZE:100}
+  schedule:
+    enabled: true
+    cron: ${BIRTHDAY_REMINDER_SERVICE_SCHEDULE_CRON:0 7 * * * *}
