@@ -85,7 +85,7 @@ public class BirthDayReminderApplicationTest {
 
     @NotNull
     private MvcResult sendCreateBirthDayReminderRequest(String path) throws Exception {
-        return mvc.perform(MockMvcRequestBuilders.post("/")
+        return mvc.perform(MockMvcRequestBuilders.post("/reminder")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(loadClassPathFile(path))
                 .accept(MediaType.APPLICATION_JSON_VALUE))

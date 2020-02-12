@@ -19,7 +19,7 @@ public class BirthDayReminderController {
 
     private final BirthDayReminderService birthDayReminderService;
 
-    @PostMapping("/")
+    @PostMapping("/reminder")
     public ResponseEntity<?> createBirthDayReminder(@Valid @RequestBody BirthDayReminder reminder) {
         Result<CreateBirthDayReminderResult> result = birthDayReminderService.create(reminder);
         return processResult(result);
