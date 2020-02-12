@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: birthday-reminder-service
+  datasource:
+    url: jdbc:postgresql://${DATASOURCE_URL}/${DATASOURCE_DBNAME}
+    username: ${DATASOURCE_USERNAME}
+    password: ${DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  flyway:
+    enabled: true
+  jpa:
+    open-in-view: false
+    database-platform: org.hibernate.dialect.PostgreSQL94Dialect
+    properties:
+      hibernate.temp.use_jdbc_metadata_defaults: false
+
+server:
+  port: 9292
+
+birthday-reminder-service:
+  batch-size: ${BIRTHDAY_REMINDER_SERVICE_BATCH_SIZE:100}
+  schedule:
+    enabled: true
+    cron: ${BIRTHDAY_REMINDER_SERVICE_SCHEDULE_CRON:0 7 * * * *}
