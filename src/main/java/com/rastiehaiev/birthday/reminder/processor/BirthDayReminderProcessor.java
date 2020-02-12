@@ -19,8 +19,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
+/**
+ * This class is responsible to process upcoming reminders and generate corresponding notifications.
+ * For each particular reminder, an appropriate strategy is found unless preferred one is specified.
+ * A service that will consume generated notifications will have all the necessary information to send it to user in appropriate way.
+ * If reminder has expired, the next birthday timestamp is calculated to be processed in the next year.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -38,11 +43,9 @@ public class BirthDayReminderProcessor {
         List<Notification> notifications = new ArrayList<>();
         List<BirthDayReminderEntity> expiredReminders = new ArrayList<>();
 
-        int daysAmount = largestDaysAmount();
         Instant instantAtStartOfDay = clock.instant().truncatedTo(ChronoUnit.DAYS);
-
         long lastUpdatedMark = clock.instant().toEpochMilli() + TimeUnit.HOURS.toMillis(1);
-        long upcomingBirthDaysTimestamp = instantAtStartOfDay.plus(daysAmount + 1, ChronoUnit.DAYS).toEpochMilli();
+        long upcomingBirthDaysTimestamp = instantAtStartOfDay.plus(BirthDayReminderStrategy.MAX_DAYS_AMOUNT + 1, ChronoUnit.DAYS).toEpochMilli();
         List<BirthDayReminderEntity> upcomingReminders = findUpcoming(lastUpdatedMark, upcomingBirthDaysTimestamp);
         for (BirthDayReminderEntity reminder : upcomingReminders) {
             if (instantAtStartOfDay.toEpochMilli() > reminder.getNextBirthDayTimestamp()) {
@@ -88,18 +91,15 @@ public class BirthDayReminderProcessor {
         notification.setRemindedUserFirstName(reminder.getRemindedUserFirstName());
         notification.setRemindedUserLastName(reminder.getRemindedUserLastName());
         notification.setType(targetStrategy);
+        notification.setDay(reminder.getDay());
+        notification.setMonth(reminder.getMonth());
+        notification.setYear(reminder.getYear());
         return notification;
     }
 
     private BirthDayReminderStrategy findTargetStrategy(long currentTimestamp, long nextBirthDayTimestamp) {
         int days = (int) TimeUnit.MILLISECONDS.toDays(nextBirthDayTimestamp - currentTimestamp);
         return BirthDayReminderStrategy.of(days);
-    }
-
-    private int largestDaysAmount() {
-        return Stream.of(BirthDayReminderStrategy.values())
-                .mapToInt(BirthDayReminderStrategy::getDaysAmount)
-                .max().orElseThrow(() -> new IllegalStateException("Failed to get max value of days amount."));
     }
 }
 

@@ -28,7 +28,10 @@ The resulted notification payload looks like this:
   "remindedUserChatId": 1,
   "remindedUserFirstName": "First Name",
   "remindedUserLastName": "Last Name",
-  "stage": "THREE_DAYS_BEFORE"
+  "type": "THREE_DAYS_BEFORE",
+  "day": 11,
+  "month": 11,
+  "year": 1993
 }
 ```
 Consuming service will then decide how to handle this message and send reminder to user in a most appropriate way.
@@ -36,6 +39,6 @@ Consuming service will then decide how to handle this message and send reminder 
 # TODO
 1. Write more JUnit/Integration tests.
 2. Add possibility to change current reminder stage via HTTP.
-3. Add possibility to disable notifications or even delete the reminder.
+3. Add possibility to disable notifications for current year and even delete the reminder.
 4. Send notifications to Kafka, so another service can read them and process.
 5. Move scheduler to the separate service.

@@ -11,4 +11,7 @@ public class Notification {
     private String remindedUserFirstName;
     private String remindedUserLastName;
     private BirthDayReminderStrategy type;
+    private int day;
+    private int month;
+    private Integer year;
 }
