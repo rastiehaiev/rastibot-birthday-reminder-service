@@ -1,6 +1,6 @@
 package com.rastiehaiev.birthday.reminder.service;
 
-import com.rastiehaiev.birthday.reminder.model.Notification;
+import com.rastiehaiev.birthday.reminder.model.notification.Notification;
 import com.rastiehaiev.birthday.reminder.processor.BirthDayReminderProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

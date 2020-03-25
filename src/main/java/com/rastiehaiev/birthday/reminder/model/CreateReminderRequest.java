@@ -3,12 +3,10 @@ package com.rastiehaiev.birthday.reminder.model;
 import lombok.Data;
 
 @Data
-public class BirthDayReminder {
+public class CreateReminderRequest {
 
-    private Long chatId;
-    private int day;
-    private int month;
-    private Integer year;
+    private long chatId;
     private Person person;
+    private Birthday birthday;
     private boolean override;
 }

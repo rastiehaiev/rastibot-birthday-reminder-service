@@ -1,8 +1,15 @@
 package com.rastiehaiev.birthday.reminder.exception;
 
-public class ReminderAlreadyExistsException extends ReminderServiceException {
+import com.rastiehaiev.birthday.reminder.model.BirthDayReminder;
+import lombok.Getter;
 
-    public ReminderAlreadyExistsException(String message) {
+public class ReminderAlreadyExistsException extends ConflictException {
+
+    @Getter
+    private final BirthDayReminder existing;
+
+    public ReminderAlreadyExistsException(String message, BirthDayReminder existing) {
         super(message);
+        this.existing = existing;
     }
 }

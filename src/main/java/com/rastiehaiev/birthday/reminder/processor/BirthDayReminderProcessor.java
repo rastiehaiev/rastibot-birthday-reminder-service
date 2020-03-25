@@ -1,10 +1,12 @@
 package com.rastiehaiev.birthday.reminder.processor;
 
 import com.rastiehaiev.birthday.reminder.model.BirthDayReminderStrategy;
-import com.rastiehaiev.birthday.reminder.model.Notification;
+import com.rastiehaiev.birthday.reminder.model.notification.Notification;
+import com.rastiehaiev.birthday.reminder.model.notification.NotificationAction;
 import com.rastiehaiev.birthday.reminder.repository.BirthDayReminderRepository;
 import com.rastiehaiev.birthday.reminder.repository.entity.BirthDayReminderEntity;
 import com.rastiehaiev.birthday.reminder.service.BirthDayReminderService;
+import com.rastiehaiev.birthday.reminder.utils.BirthdayReminderUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -18,6 +20,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This class is responsible to process upcoming reminders and generate corresponding notifications.
@@ -49,7 +53,8 @@ public class BirthDayReminderProcessor {
             } else {
                 BirthDayReminderStrategy targetStrategy = findTargetStrategy(instantAtStartOfDay.toEpochMilli(), reminder.getNextBirthDayTimestamp());
                 BirthDayReminderStrategy preferredStrategy = reminder.getPreferredStrategy();
-                if (targetStrategy != null && (preferredStrategy == null || preferredStrategy.getDaysAmount() >= targetStrategy.getDaysAmount())) {
+                if (!reminder.isDisabled() && targetStrategy != null
+                        && (preferredStrategy == null || preferredStrategy.getDaysAmount() >= targetStrategy.getDaysAmount())) {
                     notifications.add(getNotificationFromReminder(reminder, targetStrategy));
                 }
             }
@@ -58,6 +63,7 @@ public class BirthDayReminderProcessor {
 
         processExpiredReminders(expiredReminders);
         repository.saveAll(upcomingReminders);
+        log.info("Created {} notifications.", notifications.size());
         return notifications;
     }
 
@@ -67,6 +73,7 @@ public class BirthDayReminderProcessor {
             for (BirthDayReminderEntity expiredReminder : expiredReminders) {
                 long nextBirthdayTimestamp = reminderService.calculateNextBirthdayTimestamp(expiredReminder.getMonth(), expiredReminder.getDay());
                 expiredReminder.setNextBirthDayTimestamp(nextBirthdayTimestamp);
+                expiredReminder.setDisabled(false);
             }
         }
     }
@@ -83,14 +90,20 @@ public class BirthDayReminderProcessor {
         Notification notification = new Notification();
         notification.setId(reminder.getId());
         notification.setChatId(reminder.getChatId());
-        notification.setReminderUserChatId(reminder.getRemindedUserChatId());
-        notification.setRemindedUserFirstName(reminder.getRemindedUserFirstName());
-        notification.setRemindedUserLastName(reminder.getRemindedUserLastName());
+        notification.setPerson(BirthdayReminderUtils.toPerson(reminder));
         notification.setType(targetStrategy);
         notification.setDay(reminder.getDay());
         notification.setMonth(reminder.getMonth());
         notification.setYear(reminder.getYear());
+        notification.setActions(getAvailableActions(targetStrategy));
         return notification;
+    }
+
+    private List<String> getAvailableActions(BirthDayReminderStrategy strategy) {
+        return Stream.of(NotificationAction.values())
+                .filter(action -> action.getSupportedDaysBefore() < strategy.getDaysAmount())
+                .map(NotificationAction::getAbbreviation)
+                .collect(Collectors.toList());
     }
 
     private BirthDayReminderStrategy findTargetStrategy(long currentTimestamp, long nextBirthDayTimestamp) {
