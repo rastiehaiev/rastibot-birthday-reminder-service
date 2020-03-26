@@ -141,4 +141,8 @@ public class BirthDayReminderService {
         }
         return LocalDate.of(currentYear, month.getValue(), day);
     }
+
+    public Long countAll() {
+        return repository.count();
+    }
 }
