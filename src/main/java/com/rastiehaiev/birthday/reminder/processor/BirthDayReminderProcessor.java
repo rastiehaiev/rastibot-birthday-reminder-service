@@ -1,16 +1,16 @@
 package com.rastiehaiev.birthday.reminder.processor;
 
+import com.rastiehaiev.birthday.reminder.component.TargetStrategyResolver;
 import com.rastiehaiev.birthday.reminder.model.BirthDayReminderStrategy;
 import com.rastiehaiev.birthday.reminder.model.notification.Notification;
 import com.rastiehaiev.birthday.reminder.model.notification.NotificationAction;
-import com.rastiehaiev.birthday.reminder.repository.BirthDayReminderRepository;
 import com.rastiehaiev.birthday.reminder.repository.entity.BirthDayReminderEntity;
 import com.rastiehaiev.birthday.reminder.service.BirthDayReminderService;
+import com.rastiehaiev.birthday.reminder.service.NextBirthdayTimestampCalculator;
 import com.rastiehaiev.birthday.reminder.utils.BirthdayReminderUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 import javax.transaction.Transactional;
@@ -19,7 +19,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -35,8 +35,9 @@ import java.util.stream.Stream;
 public class BirthDayReminderProcessor {
 
     private final Clock clock;
-    private final BirthDayReminderRepository repository;
     private final BirthDayReminderService reminderService;
+    private final NextBirthdayTimestampCalculator calculator;
+    private final TargetStrategyResolver targetStrategyResolver;
 
     @Transactional
     public List<Notification> processBatch(int batchSize) {
@@ -44,46 +45,56 @@ public class BirthDayReminderProcessor {
         List<BirthDayReminderEntity> expiredReminders = new ArrayList<>();
 
         Instant instantAtStartOfDay = clock.instant().truncatedTo(ChronoUnit.DAYS);
-        long lastUpdatedMark = clock.instant().toEpochMilli() + TimeUnit.HOURS.toMillis(1);
-        long upcomingBirthDaysTimestamp = instantAtStartOfDay.plus(BirthDayReminderStrategy.MAX_DAYS_AMOUNT + 1, ChronoUnit.DAYS).toEpochMilli();
-        List<BirthDayReminderEntity> upcomingReminders = findUpcoming(lastUpdatedMark, upcomingBirthDaysTimestamp, batchSize);
+        log.info("Current timestamp at start of the day: {}.", instantAtStartOfDay.toEpochMilli());
+        List<BirthDayReminderEntity> upcomingReminders = reminderService.findUpcoming(batchSize);
         for (BirthDayReminderEntity reminder : upcomingReminders) {
+            log.info("Processing reminder {}.", reminder);
             if (instantAtStartOfDay.toEpochMilli() > reminder.getNextBirthDayTimestamp()) {
+                log.info("Reminder has expired: {}.", reminder);
                 expiredReminders.add(reminder);
             } else {
-                BirthDayReminderStrategy targetStrategy = findTargetStrategy(instantAtStartOfDay.toEpochMilli(), reminder.getNextBirthDayTimestamp());
-                BirthDayReminderStrategy preferredStrategy = reminder.getPreferredStrategy();
-                if (!reminder.isDisabled() && targetStrategy != null
-                        && (preferredStrategy == null || preferredStrategy.getDaysAmount() >= targetStrategy.getDaysAmount())) {
-                    notifications.add(getNotificationFromReminder(reminder, targetStrategy));
-                }
+                Optional<Notification> notification = tryToCreateNotification(reminder);
+                notification.ifPresent(notifications::add);
             }
             reminder.setLastUpdated(clock.instant().toEpochMilli());
         }
 
         processExpiredReminders(expiredReminders);
-        repository.saveAll(upcomingReminders);
+        reminderService.update(upcomingReminders);
         log.info("Created {} notifications.", notifications.size());
         return notifications;
+    }
+
+    private Optional<Notification> tryToCreateNotification(BirthDayReminderEntity reminder) {
+        if (reminder.isDisabled()) {
+            log.info("Reminder {} is disabled.", reminder);
+            return Optional.empty();
+        }
+        BirthDayReminderStrategy targetStrategy = targetStrategyResolver.resolve(reminder.getNextBirthDayTimestamp());
+        if (targetStrategy == null) {
+            log.info("Reminder {} is not to be processed yet.", reminder);
+            return Optional.empty();
+        }
+        BirthDayReminderStrategy preferredStrategy = reminder.getPreferredStrategy();
+        if (preferredStrategy != null) {
+            if (preferredStrategy.getDaysAmount() < targetStrategy.getDaysAmount()) {
+                log.info("Reminder: {}. Preferred strategy '{}' is less than target one {}. Skipping for now.",
+                        reminder, preferredStrategy, targetStrategy);
+                return Optional.empty();
+            }
+        }
+        return Optional.of(getNotificationFromReminder(reminder, targetStrategy));
     }
 
     private void processExpiredReminders(List<BirthDayReminderEntity> expiredReminders) {
         if (CollectionUtils.isNotEmpty(expiredReminders)) {
             log.info("Found {} expired reminders.", expiredReminders.size());
             for (BirthDayReminderEntity expiredReminder : expiredReminders) {
-                long nextBirthdayTimestamp = reminderService.calculateNextBirthdayTimestamp(expiredReminder.getMonth(), expiredReminder.getDay());
+                long nextBirthdayTimestamp = calculator.nextBirthdayTimestamp(expiredReminder.getMonth(), expiredReminder.getDay());
                 expiredReminder.setNextBirthDayTimestamp(nextBirthdayTimestamp);
                 expiredReminder.setDisabled(false);
             }
         }
-    }
-
-    private List<BirthDayReminderEntity> findUpcoming(long lastUpdatedMark, long upcomingBirthDaysTimestamp, int batchSize) {
-        List<BirthDayReminderEntity> upcoming = repository.findUpcoming(upcomingBirthDaysTimestamp, lastUpdatedMark, PageRequest.of(0, batchSize));
-        if (CollectionUtils.isNotEmpty(upcoming)) {
-            log.info("Found {} upcoming reminders.", upcoming.size());
-        }
-        return upcoming;
     }
 
     private Notification getNotificationFromReminder(BirthDayReminderEntity reminder, BirthDayReminderStrategy targetStrategy) {
@@ -104,11 +115,6 @@ public class BirthDayReminderProcessor {
                 .filter(action -> action.getSupportedDaysBefore() < strategy.getDaysAmount())
                 .map(NotificationAction::getAbbreviation)
                 .collect(Collectors.toList());
-    }
-
-    private BirthDayReminderStrategy findTargetStrategy(long currentTimestamp, long nextBirthDayTimestamp) {
-        int days = (int) TimeUnit.MILLISECONDS.toDays(nextBirthDayTimestamp - currentTimestamp);
-        return BirthDayReminderStrategy.of(days);
     }
 }
 

@@ -9,7 +9,7 @@ public class Scheduler {
 
     private final BirthDayReminderProcessingService birthDayReminderProcessingService;
 
-    @Scheduled(cron = "${birthday-reminder-service.schedule.cron}", zone = "Europe/Sofia")
+    @Scheduled(cron = "${birthday-reminder-service.schedule.cron}", zone = "${birthday-reminder-service.schedule.zone}")
     public void processBirthDayReminders() {
         birthDayReminderProcessingService.processBirthDayReminders();
     }

@@ -6,6 +6,7 @@ import com.rastiehaiev.birthday.reminder.model.CreateReminderRequest;
 import com.rastiehaiev.birthday.reminder.model.CreateReminderResult;
 import com.rastiehaiev.birthday.reminder.model.output.CreateBirthDayReminderSuccess;
 import com.rastiehaiev.birthday.reminder.service.BirthDayReminderService;
+import com.rastiehaiev.birthday.reminder.service.EventCreationService;
 import com.sbrati.spring.boot.starter.gcp.pubsub.GcpPubSubSubscriber;
 import com.sbrati.telegram.domain.Event;
 import com.sbrati.telegram.domain.StatusCode;
@@ -17,11 +18,16 @@ import org.springframework.stereotype.Component;
 public class CreateReminderSubscriber extends GcpPubSubSubscriber<CreateReminderRequest> {
 
     private final BirthDayReminderService reminderService;
+    private final EventCreationService eventCreationService;
     private final CreateReminderResultPublisher createReminderResultPublisher;
 
-    public CreateReminderSubscriber(BirthDayReminderService reminderService, CreateReminderResultPublisher createReminderResultPublisher) {
+    public CreateReminderSubscriber(BirthDayReminderService reminderService,
+                                    EventCreationService eventCreationService,
+                                    CreateReminderResultPublisher createReminderResultPublisher) {
+
         super(CreateReminderRequest.class, "create-birthday-reminder");
         this.reminderService = reminderService;
+        this.eventCreationService = eventCreationService;
         this.createReminderResultPublisher = createReminderResultPublisher;
     }
 
@@ -29,9 +35,7 @@ public class CreateReminderSubscriber extends GcpPubSubSubscriber<CreateReminder
     public void process(Event<CreateReminderRequest> event) {
         log.info("Processing event {}", event);
         if (event != null && event.getPayload() != null) {
-            Event<CreateReminderResult> outEvent = new Event<>();
-            outEvent.setChatId(event.getChatId());
-            outEvent.setTimestamp(System.currentTimeMillis());
+            Event<CreateReminderResult> outEvent = eventCreationService.create(event.getChatId(), null);
             try {
                 CreateBirthDayReminderSuccess success = reminderService.create(toReminder(event.getPayload()));
                 outEvent.setPayload(getCreateReminderResult(success));

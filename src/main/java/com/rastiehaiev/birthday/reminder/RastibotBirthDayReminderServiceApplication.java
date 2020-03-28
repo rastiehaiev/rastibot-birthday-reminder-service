@@ -6,9 +6,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @EnableScheduling
 @SpringBootApplication
-public class BirthDayReminderApplication {
+public class RastibotBirthDayReminderServiceApplication {
 
-    public static void main(final String[] args) {
-        SpringApplication.run(BirthDayReminderApplication.class, args);
+    public static void main(String[] args) {
+        SpringApplication.run(RastibotBirthDayReminderServiceApplication.class, args);
     }
 }
