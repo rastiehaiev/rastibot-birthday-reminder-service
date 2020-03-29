@@ -13,6 +13,10 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQL94Dialect
     properties:
       hibernate.temp.use_jdbc_metadata_defaults: false
+  cloud:
+    gcp:
+      pubsub:
+        enabled: true
 
 logging:
   level:

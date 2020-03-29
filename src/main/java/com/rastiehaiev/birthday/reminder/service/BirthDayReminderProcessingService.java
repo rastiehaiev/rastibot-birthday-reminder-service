@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.List;
 
 @Slf4j
@@ -16,10 +17,12 @@ import java.util.List;
 public class BirthDayReminderProcessingService {
 
     private final BirthDayReminderProcessor processor;
+    private final BirthDayReminderService birthDayReminderService;
     private final NotificationSenderService notificationSenderService;
 
     private final RastibotBirthDayReminderServiceScheduleProperties properties;
 
+    @Transactional
     public void processBirthDayReminders() {
         log.info("Started processing birthday reminders.");
         boolean nextBatchAvailable = true;
@@ -31,6 +34,7 @@ public class BirthDayReminderProcessingService {
             } else {
                 log.info("Batch number: {}.", currentBatch);
                 notificationSenderService.sendNotifications(notifications);
+                birthDayReminderService.postProcessNotifications(notifications);
                 currentBatch++;
             }
         }

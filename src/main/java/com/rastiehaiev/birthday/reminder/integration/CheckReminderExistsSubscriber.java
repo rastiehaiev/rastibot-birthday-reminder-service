@@ -8,18 +8,16 @@ import com.rastiehaiev.birthday.reminder.service.EventCreationService;
 import com.sbrati.spring.boot.starter.gcp.pubsub.GcpPubSubSubscriber;
 import com.sbrati.telegram.domain.Event;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 @Slf4j
-@Component
 public class CheckReminderExistsSubscriber extends GcpPubSubSubscriber<CheckReminderExistsRequest> {
 
     private final BirthDayReminderService reminderService;
     private final EventCreationService eventCreationService;
     private final CheckReminderExistsResultPublisher checkReminderExistsResultPublisher;
 
-    public CheckReminderExistsSubscriber(EventCreationService eventCreationService,
-                                         BirthDayReminderService reminderService,
+    public CheckReminderExistsSubscriber(BirthDayReminderService reminderService,
+                                         EventCreationService eventCreationService,
                                          CheckReminderExistsResultPublisher checkReminderExistsResultPublisher) {
 
         super(CheckReminderExistsRequest.class, "check-birthday-reminder-exists");

@@ -39,6 +39,9 @@ public class BirthDayReminderEntity {
     @Enumerated(value = EnumType.STRING)
     private BirthDayReminderStrategy preferredStrategy;
 
+    @Column(name = "last_notified_days")
+    private Integer lastNotifiedDays;
+
     @Column(name = "last_updated")
     private Long lastUpdated;
 

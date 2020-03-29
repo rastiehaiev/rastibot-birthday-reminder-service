@@ -61,7 +61,9 @@ public class BirthDayReminderProcessor {
 
         processExpiredReminders(expiredReminders);
         reminderService.update(upcomingReminders);
-        log.info("Created {} notifications.", notifications.size());
+        if (notifications.size() != 0) {
+            log.info("Created {} notifications.", notifications.size());
+        }
         return notifications;
     }
 
@@ -83,6 +85,10 @@ public class BirthDayReminderProcessor {
                 return Optional.empty();
             }
         }
+        if (reminder.getLastNotifiedDays() != null && targetStrategy.getDaysAmount() == reminder.getLastNotifiedDays()) {
+            log.info("Reminder {} was already sent with strategy '{}'.", reminder, targetStrategy);
+            return Optional.empty();
+        }
         return Optional.of(getNotificationFromReminder(reminder, targetStrategy));
     }
 
@@ -93,6 +99,7 @@ public class BirthDayReminderProcessor {
                 long nextBirthdayTimestamp = calculator.nextBirthdayTimestamp(expiredReminder.getMonth(), expiredReminder.getDay());
                 expiredReminder.setNextBirthDayTimestamp(nextBirthdayTimestamp);
                 expiredReminder.setDisabled(false);
+                expiredReminder.setLastNotifiedDays(null);
             }
         }
     }

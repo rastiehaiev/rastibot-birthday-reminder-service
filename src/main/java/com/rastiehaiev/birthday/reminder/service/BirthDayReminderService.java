@@ -2,6 +2,7 @@ package com.rastiehaiev.birthday.reminder.service;
 
 import com.rastiehaiev.birthday.reminder.exception.ReminderAlreadyExistsException;
 import com.rastiehaiev.birthday.reminder.model.*;
+import com.rastiehaiev.birthday.reminder.model.notification.Notification;
 import com.rastiehaiev.birthday.reminder.model.notification.NotificationAction;
 import com.rastiehaiev.birthday.reminder.model.notification.NotificationActionRequest;
 import com.rastiehaiev.birthday.reminder.model.output.CreateBirthDayReminderSuccess;
@@ -46,10 +47,9 @@ public class BirthDayReminderService {
     public List<BirthDayReminderEntity> findUpcoming(int batchSize) {
         Instant instant = clock.instant();
         Instant instantAtStartOfDay = instant.truncatedTo(ChronoUnit.DAYS);
-        long lastUpdatedMark = instant.toEpochMilli() + TimeUnit.HOURS.toMillis(properties.getLastUpdatedReminderHours());
         long upcomingBirthDaysTimestamp = instantAtStartOfDay.plus(BirthDayReminderStrategy.MAX_DAYS_AMOUNT + 1, ChronoUnit.DAYS).toEpochMilli();
-
-        List<BirthDayReminderEntity> upcoming = repository.findUpcoming(upcomingBirthDaysTimestamp, lastUpdatedMark, PageRequest.of(0, batchSize));
+        long lastUpdatedTimestamp = instant.toEpochMilli() - TimeUnit.HOURS.toMillis(1);
+        List<BirthDayReminderEntity> upcoming = repository.findUpcoming(upcomingBirthDaysTimestamp, lastUpdatedTimestamp, PageRequest.of(0, batchSize));
         if (CollectionUtils.isNotEmpty(upcoming)) {
             log.info("Found {} upcoming reminders.", upcoming.size());
         }
@@ -78,6 +78,7 @@ public class BirthDayReminderService {
         reminder.setRemindedUserLastName(birthDayReminder.getPerson().getLastName());
         reminder.setDisabled(false);
         reminder.setDeleted(false);
+        reminder.setLastUpdated(null);
 
         long nextBirthDayTimestamp = calculator.nextBirthdayTimestamp(birthDayReminder.getMonth(), birthDayReminder.getDay());
         reminder.setNextBirthDayTimestamp(nextBirthDayTimestamp);
@@ -148,5 +149,15 @@ public class BirthDayReminderService {
 
     public Long countAll() {
         return repository.count();
+    }
+
+    public void postProcessNotifications(List<Notification> notifications) {
+        notifications.forEach(this::postProcessNotification);
+    }
+
+    private void postProcessNotification(Notification notification) {
+        int daysAmount = notification.getType().getDaysAmount();
+        log.info("Update last notified days to {} for reminder with ID={}.", daysAmount, notification.getId());
+        repository.updateLastNotifiedDays(notification.getId(), daysAmount);
     }
 }

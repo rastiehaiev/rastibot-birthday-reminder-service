@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 import javax.transaction.Transactional;
 
 @Slf4j
-@Component
 public class NotificationActionSubscriber extends GcpPubSubSubscriber<NotificationActionRequest> {
 
     private final BirthDayReminderService reminderService;
