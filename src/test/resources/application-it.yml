@@ -36,7 +36,7 @@ google-cloud:
         - key: create-birthday-reminder
           name: "dev-create-birthday-reminder-subscription"
         - key: birthday-reminder-notification-action
-          name: "dev-birthday-reminder-notification-action-subscriber"
+          name: "dev-birthday-reminder-notification-action-subscription"
 
 birthday-reminder-service:
   schedule:

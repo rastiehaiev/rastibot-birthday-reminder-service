@@ -1,6 +1,8 @@
 spring:
   application:
     name: rastibot-birthday-reminder-service
+  main:
+    banner-mode: off
   datasource:
     url: jdbc:postgresql://${DATASOURCE_URL}/${DATASOURCE_DBNAME}
     username: rastibot-birthday-reminder-service
@@ -19,6 +21,7 @@ spring:
         enabled: true
 
 logging:
+  config: classpath:com/sbrati/logging/gcp/logging-config.xml
   level:
     root: INFO
     com.sbrati: INFO

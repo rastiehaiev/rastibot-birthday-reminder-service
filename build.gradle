@@ -7,10 +7,11 @@ apply plugin: 'java'
 apply plugin: 'io.spring.dependency-management'
 
 group = "com.sbrati"
-version = "2.0.4"
+version = "2.0.5"
 
 repositories {
     jcenter()
+    mavenLocal()
     maven {
         url = project.properties["sbraticomUrl"]
         credentials {
@@ -25,6 +26,8 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    implementation 'com.sbrati:spring-boot-starter-gcp-logging:1.0.0'
     implementation 'com.sbrati:spring-boot-starter-gcp-pubsub:1.0.8'
 
     implementation 'org.postgresql:postgresql:42.2.6'
@@ -45,15 +48,11 @@ dependencies {
 sourceCompatibility = 11
 targetCompatibility = 11
 
-def gcpProjectId = project.properties["gcpProjectId"].toString()
-def gcpImageName = "eu.gcr.io/${gcpProjectId}/${project.name}"
 def sbratiImageName = "${project.properties["sbraticomDockerBaseImageName"].toString()}/${project.name}"
 docker {
     springBootApplication {
         baseImage = 'openjdk:11-jdk-slim'
         images = [
-                "${gcpImageName}:${project.version}",
-                "${gcpImageName}:latest",
                 "${sbratiImageName}:${project.version}",
                 "${sbratiImageName}:latest"
         ]
