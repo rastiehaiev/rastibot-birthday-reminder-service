@@ -7,7 +7,7 @@ apply plugin: 'java'
 apply plugin: 'io.spring.dependency-management'
 
 group = "com.sbrati"
-version = "2.0.5"
+version = "2.0.6"
 
 repositories {
     jcenter()
@@ -27,7 +27,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
-    implementation 'com.sbrati:spring-boot-starter-gcp-logging:1.0.0'
+    implementation 'com.sbrati:spring-boot-starter-gcp-logging:1.0.5'
     implementation 'com.sbrati:spring-boot-starter-gcp-pubsub:1.0.8'
 
     implementation 'org.postgresql:postgresql:42.2.6'
