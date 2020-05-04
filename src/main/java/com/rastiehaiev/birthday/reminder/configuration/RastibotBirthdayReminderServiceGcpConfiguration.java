@@ -32,6 +32,11 @@ public class RastibotBirthdayReminderServiceGcpConfiguration {
     }
 
     @Bean
+    public ListBirthdayRemindersPublisher listBirthdayRemindersPublisher() {
+        return new ListBirthdayRemindersPublisher();
+    }
+
+    @Bean
     public NotificationActionResultPublisher notificationActionResultPublisher() {
         return new NotificationActionResultPublisher();
     }
@@ -49,5 +54,20 @@ public class RastibotBirthdayReminderServiceGcpConfiguration {
     @Bean
     public NotificationActionSubscriber notificationActionSubscriber() {
         return new NotificationActionSubscriber(reminderService, eventCreationService, notificationActionResultPublisher());
+    }
+
+    @Bean
+    public ListBirthdayRemindersSubscriber listBirthdayRemindersSubscriber() {
+        return new ListBirthdayRemindersSubscriber(reminderService, eventCreationService, listBirthdayRemindersPublisher());
+    }
+
+    @Bean
+    public DeleteBirthdayReminderResultPublisher deleteBirthdayReminderResultPublisher() {
+        return new DeleteBirthdayReminderResultPublisher();
+    }
+
+    @Bean
+    public DeleteBirthdayReminderSubscriber deleteBirthdayReminderSubscriber() {
+        return new DeleteBirthdayReminderSubscriber(reminderService, deleteBirthdayReminderResultPublisher(), eventCreationService);
     }
 }

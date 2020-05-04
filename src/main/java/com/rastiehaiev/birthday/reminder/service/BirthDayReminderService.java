@@ -1,12 +1,10 @@
 package com.rastiehaiev.birthday.reminder.service;
 
-import com.rastiehaiev.birthday.reminder.exception.ReminderAlreadyExistsException;
 import com.rastiehaiev.birthday.reminder.model.*;
 import com.rastiehaiev.birthday.reminder.model.notification.Notification;
 import com.rastiehaiev.birthday.reminder.model.notification.NotificationAction;
 import com.rastiehaiev.birthday.reminder.model.notification.NotificationActionRequest;
 import com.rastiehaiev.birthday.reminder.model.output.CreateBirthDayReminderSuccess;
-import com.rastiehaiev.birthday.reminder.properties.RastibotBirthDayReminderServiceScheduleProperties;
 import com.rastiehaiev.birthday.reminder.repository.BirthDayReminderRepository;
 import com.rastiehaiev.birthday.reminder.repository.entity.BirthDayReminderEntity;
 import com.rastiehaiev.birthday.reminder.utils.BirthdayReminderUtils;
@@ -14,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -21,8 +20,10 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.Month;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -32,10 +33,9 @@ public class BirthDayReminderService {
     private final Clock clock;
     private final BirthDayReminderRepository repository;
     private final NextBirthdayTimestampCalculator calculator;
-    private final RastibotBirthDayReminderServiceScheduleProperties properties;
 
     public ExistingReminder findExisting(long chatId, long remindedUserChatId) {
-        BirthDayReminderEntity existingReminderEntity = repository.findByChatIdAndRemindedUserChatId(chatId, remindedUserChatId);
+        BirthDayReminderEntity existingReminderEntity = repository.findByChatIdAndRemindedUserChatIdAndDeletedFalse(chatId, remindedUserChatId);
         if (existingReminderEntity != null) {
             ExistingReminder existingReminder = new ExistingReminder();
             existingReminder.setBirthday(getBirthday(existingReminderEntity));
@@ -56,15 +56,41 @@ public class BirthDayReminderService {
         return upcoming;
     }
 
+    public List<BirthdayReminderData> findAllOfKind(long chatId, ListBirthdayRemindersKind kind) {
+        List<BirthDayReminderEntity> entities = findAllEntitiesOfKind(chatId, kind);
+        return entities.stream()
+                .map(this::toBirthdayReminderData)
+                .collect(Collectors.toList());
+    }
+
+    private List<BirthDayReminderEntity> findAllEntitiesOfKind(long chatId, ListBirthdayRemindersKind kind) {
+        switch (kind) {
+            case ALL:
+                Pageable pageable = PageRequest.of(0, 10);
+                return repository.findAllByChatIdAndDeletedFalseOrderByNextBirthDayTimestamp(chatId, pageable);
+            case UPCOMING:
+                return Collections.singletonList(repository.findNearest(chatId));
+            case NEXT_THREE:
+                return repository.findThreeNearest(chatId);
+            default:
+                Month month = Month.valueOf(kind.name());
+                return repository.findByMonth(chatId, month.getValue());
+        }
+    }
+
+    private BirthdayReminderData toBirthdayReminderData(BirthDayReminderEntity entity) {
+        BirthdayReminderData birthdayReminderData = new BirthdayReminderData();
+        birthdayReminderData.setId(entity.getId());
+        birthdayReminderData.setBirthday(getBirthday(entity));
+        birthdayReminderData.setPerson(getPerson(entity));
+        return birthdayReminderData;
+    }
+
     public CreateBirthDayReminderSuccess create(BirthDayReminder birthDayReminder) {
         long chatId = birthDayReminder.getChatId();
         long remindedUserChatId = birthDayReminder.getPerson().getChatId();
 
         BirthDayReminderEntity reminder = repository.findByChatIdAndRemindedUserChatId(chatId, remindedUserChatId);
-        if (reminder != null && !birthDayReminder.isOverride()) {
-            throw new ReminderAlreadyExistsException("Reminder already exists.", toReminder(reminder));
-        }
-
         if (reminder == null) {
             reminder = new BirthDayReminderEntity();
         }
@@ -124,6 +150,25 @@ public class BirthDayReminderService {
         return BirthdayReminderUtils.toPerson(entity);
     }
 
+    @Transactional
+    public void markAsDeleted(long reminderId) {
+        repository.findById(reminderId)
+                .ifPresent(reminder -> {
+                    reminder.setDeleted(true);
+                    reminder.setDisabled(false);
+                });
+    }
+
+    private BirthDayReminder toReminder(BirthDayReminderEntity existingReminder) {
+        BirthDayReminder reminder = new BirthDayReminder();
+        reminder.setChatId(existingReminder.getChatId());
+        reminder.setDay(existingReminder.getDay());
+        reminder.setMonth(existingReminder.getMonth());
+        reminder.setYear(existingReminder.getYear());
+        reminder.setPerson(getPerson(existingReminder));
+        return reminder;
+    }
+
     private Birthday getBirthday(BirthDayReminderEntity existingReminderEntity) {
         Birthday birthday = new Birthday();
         birthday.setDay(existingReminderEntity.getDay());
@@ -132,23 +177,20 @@ public class BirthDayReminderService {
         return birthday;
     }
 
-    private BirthDayReminder toReminder(BirthDayReminderEntity existingReminder) {
+    private Person getPerson(BirthDayReminderEntity existingReminder) {
         Person person = new Person();
         person.setChatId(existingReminder.getRemindedUserChatId());
         person.setFirstName(existingReminder.getRemindedUserFirstName());
         person.setLastName(existingReminder.getRemindedUserLastName());
-
-        BirthDayReminder reminder = new BirthDayReminder();
-        reminder.setChatId(existingReminder.getChatId());
-        reminder.setDay(existingReminder.getDay());
-        reminder.setMonth(existingReminder.getMonth());
-        reminder.setYear(existingReminder.getYear());
-        reminder.setPerson(person);
-        return reminder;
+        return person;
     }
 
-    public Long countAll() {
+    public long countAll() {
         return repository.count();
+    }
+
+    public long countNotDeleted() {
+        return repository.countAllByDeletedFalse();
     }
 
     public void postProcessNotifications(List<Notification> notifications) {

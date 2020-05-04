@@ -42,6 +42,10 @@ google-cloud:
           name: ${BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_TOPICS_BIRTHDAY_REMINDER_NOTIFICATION}
         - key: birthday-reminder-notification-action-result
           name: ${BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_TOPICS_BIRTHDAY_REMINDER_NOTIFICATION_ACTION_RESULT}
+        - key: list-birthday-reminders-result
+          name: ${BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_TOPICS_LIST_BIRTHDAY_REMINDERS_RESULT}
+        - key: delete-birthday-reminder-result
+          name: ${BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_TOPICS_DELETE_BIRTHDAY_REMINDER_RESULT}
     subscribe:
       subscriptions:
         - key: check-birthday-reminder-exists
@@ -50,6 +54,10 @@ google-cloud:
           name: ${BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_CREATE_BIRTHDAY_REMINDER}
         - key: birthday-reminder-notification-action
           name: ${BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_BIRTHDAY_REMINDER_NOTIFICATION_ACTION}
+        - key: list-birthday-reminders
+          name: ${BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_LIST_BIRTHDAY_REMINDERS}
+        - key: delete-birthday-reminder
+          name: ${BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_DELETE_BIRTHDAY_REMINDER}
 
 birthday-reminder-service:
   schedule:

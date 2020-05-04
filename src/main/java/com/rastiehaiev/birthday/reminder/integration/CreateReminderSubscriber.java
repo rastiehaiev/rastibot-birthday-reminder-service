@@ -11,7 +11,6 @@ import com.sbrati.spring.boot.starter.gcp.pubsub.GcpPubSubSubscriber;
 import com.sbrati.telegram.domain.Event;
 import com.sbrati.telegram.domain.StatusCode;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 @Slf4j
 public class CreateReminderSubscriber extends GcpPubSubSubscriber<CreateReminderRequest> {
