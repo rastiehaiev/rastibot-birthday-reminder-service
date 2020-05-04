@@ -69,7 +69,11 @@ public class BirthDayReminderService {
                 Pageable pageable = PageRequest.of(0, 10);
                 return repository.findAllByChatIdAndDeletedFalseOrderByNextBirthDayTimestamp(chatId, pageable);
             case UPCOMING:
-                return Collections.singletonList(repository.findNearest(chatId));
+                BirthDayReminderEntity nearest = repository.findNearest(chatId);
+                if (nearest == null) {
+                    return Collections.emptyList();
+                }
+                return Collections.singletonList(nearest);
             case NEXT_THREE:
                 return repository.findThreeNearest(chatId);
             default:
